@@ -33,8 +33,18 @@
         <!-- サブスクリプション一覧 -->
         <main class="main-content">
             <div class="list-header">
-                <h3>登録済みサービス</h3>
-                <span id="service-count" class="badge">0</span>
+                <div class="list-title">
+                    <h3>登録済みサービス</h3>
+                    <span id="service-count" class="badge">0</span>
+                </div>
+                <div class="sort-control">
+                    <select id="sort-select" class="sort-select">
+                        <option value="date_asc">支払日が近い順</option>
+                        <option value="price_desc">価格が高い順</option>
+                        <option value="price_asc">価格が低い順</option>
+                        <option value="name_asc">名前順</option>
+                    </select>
+                </div>
             </div>
             <ul id="subscription-list" class="subscription-list">
                 <!-- JSで動的に追加される -->
@@ -106,6 +116,18 @@
                         <input type="color" id="bg-color-picker" value="#0f172a">
                         <button id="reset-bg-btn" class="btn btn-secondary">デフォルトに戻す</button>
                     </div>
+                </div>
+                <hr class="settings-divider">
+                <div class="form-group">
+                    <label>データの引き継ぎ（バックアップ）</label>
+                    <p class="settings-desc">今のデータをテキストとしてコピーし、アプリ更新後に下の枠に貼り付けて復元できます。</p>
+                    <button id="export-btn" class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;">
+                        <i class="fas fa-copy"></i> データをコピーする
+                    </button>
+                    <textarea id="import-data" placeholder="ここにコピーしたデータを貼り付けます..." rows="3" style="width: 100%; resize: vertical; padding: 12px; border-radius: 8px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); font-family: inherit; margin-bottom: 8px;"></textarea>
+                    <button id="import-btn" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-file-import"></i> データを復元する
+                    </button>
                 </div>
             </div>
         </div>

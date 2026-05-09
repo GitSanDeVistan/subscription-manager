@@ -15,14 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const subList = document.getElementById('subscription-list');
     const emptyState = document.getElementById('empty-state');
     
-    // Settings Elements
+    // Settings & Import/Export Elements
     const bgColorPicker = document.getElementById('bg-color-picker');
     const resetBgBtn = document.getElementById('reset-bg-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const importBtn = document.getElementById('import-btn');
+    const importData = document.getElementById('import-data');
     
-    // Dashboard Elements
+    // Dashboard & List Elements
     const monthlyTotalEl = document.getElementById('monthly-total');
     const yearlyTotalEl = document.getElementById('yearly-total');
     const serviceCountEl = document.getElementById('service-count');
+    const sortSelect = document.getElementById('sort-select');
     
     // Form Elements
     const nameInput = document.getElementById('sub-name');
@@ -77,12 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             emptyState.classList.add('hidden');
             
-            // Sort by next payment date if available, otherwise by name
+            // Sort logic
+            const sortOrder = sortSelect.value;
             const sortedSubs = [...subscriptions].sort((a, b) => {
-                if (a.nextDate && b.nextDate) return new Date(a.nextDate) - new Date(b.nextDate);
-                if (a.nextDate) return -1;
-                if (b.nextDate) return 1;
-                return a.name.localeCompare(b.name);
+                if (sortOrder === 'name_asc') {
+                    return a.name.localeCompare(b.name);
+                } else if (sortOrder === 'price_desc') {
+                    return Number(b.price) - Number(a.price);
+                } else if (sortOrder === 'price_asc') {
+                    return Number(a.price) - Number(b.price);
+                } else {
+                    // default: date_asc
+                    if (a.nextDate && b.nextDate) return new Date(a.nextDate) - new Date(b.nextDate);
+                    if (a.nextDate) return -1;
+                    if (b.nextDate) return 1;
+                    return a.name.localeCompare(b.name);
+                }
             });
 
             sortedSubs.forEach(sub => {
@@ -223,7 +237,36 @@ document.addEventListener('DOMContentLoaded', () => {
         bgColorPicker.value = defaultColor;
         localStorage.removeItem('subsk_bg_color');
     });
+
+    // Import / Export
+    exportBtn.addEventListener('click', () => {
+        const dataStr = JSON.stringify(subscriptions);
+        navigator.clipboard.writeText(dataStr).then(() => {
+            alert('データをコピーしました！新しいアプリで復元枠に貼り付けてください。');
+        }).catch(err => {
+            alert('コピーに失敗しました。手動でコピーしてください:\n' + dataStr);
+        });
+    });
+
+    importBtn.addEventListener('click', () => {
+        try {
+            const data = JSON.parse(importData.value);
+            if (Array.isArray(data)) {
+                subscriptions = data;
+                saveToStorage();
+                renderList();
+                importData.value = '';
+                alert('データを復元しました！');
+                closeSettings();
+            } else {
+                alert('無効なデータ形式です。');
+            }
+        } catch (e) {
+            alert('データの読み込みに失敗しました。正しいテキストが貼り付けられているか確認してください。');
+        }
+    });
     
+    sortSelect.addEventListener('change', renderList);
     cycleInput.addEventListener('change', toggleDateInputs);
 
     // Close modal on background click
