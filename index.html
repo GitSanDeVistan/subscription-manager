@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>サブスク管理</title>
+    <meta name="description" content="契約中のサブスクリプションを管理するPWAアプリ">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ヘッダー＆ダッシュボード -->
+        <header class="header">
+            <div class="header-top">
+                <h1>サブスク管理</h1>
+                <div class="header-actions">
+                    <button id="settings-btn" class="icon-btn"><i class="fas fa-cog"></i></button>
+                    <button id="add-btn" class="icon-btn"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="dashboard">
+                <p class="dashboard-label">月額合計</p>
+                <h2 class="dashboard-total">¥<span id="monthly-total">0</span></h2>
+                <p class="dashboard-yearly">年額換算: ¥<span id="yearly-total">0</span></p>
+            </div>
+        </header>
+
+        <!-- サブスクリプション一覧 -->
+        <main class="main-content">
+            <div class="list-header">
+                <div class="list-title">
+                    <h3>登録済みサービス</h3>
+                    <span id="service-count" class="badge">0</span>
+                </div>
+                <div class="sort-control">
+                    <select id="sort-select" class="sort-select">
+                        <option value="date_asc">支払日が近い順</option>
+                        <option value="price_desc">価格が高い順</option>
+                        <option value="price_asc">価格が低い順</option>
+                        <option value="name_asc">名前順</option>
+                    </select>
+                </div>
+            </div>
+            <ul id="subscription-list" class="subscription-list">
+                <!-- JSで動的に追加される -->
+            </ul>
+            <div id="empty-state" class="empty-state hidden">
+                <i class="fas fa-box-open"></i>
+                <p>サブスクリプションが登録されていません。<br>右上の「+」ボタンから追加してください。</p>
+            </div>
+        </main>
+
+        <!-- 追加・編集モーダル -->
+        <div id="modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-title">サブスクリプション追加</h3>
+                    <button id="close-modal" class="icon-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <form id="sub-form">
+                    <input type="hidden" id="sub-id">
+                    <div class="form-group">
+                        <label for="sub-name">サービス名</label>
+                        <input type="text" id="sub-name" required placeholder="例: Netflix">
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-price">料金 (円)</label>
+                        <input type="number" id="sub-price" required placeholder="例: 1490" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-domain">WebサイトのURL (ロゴ表示用・任意)</label>
+                        <input type="text" id="sub-domain" placeholder="例: netflix.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="sub-cycle">支払いサイクル</label>
+                        <select id="sub-cycle" required>
+                            <option value="monthly">月額</option>
+                            <option value="yearly">年額</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="date-group-yearly" class="hidden">
+                        <label for="sub-date">次回支払日 (任意)</label>
+                        <input type="date" id="sub-date">
+                    </div>
+                    <div class="form-group" id="date-group-monthly">
+                        <label>次回支払日 (月・日) (任意)</label>
+                        <div class="date-inputs">
+                            <input type="number" id="sub-month" min="1" max="12" placeholder="月">
+                            <span class="date-separator">/</span>
+                            <input type="number" id="sub-day" min="1" max="31" placeholder="日">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="delete-btn" class="btn btn-danger hidden">削除</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 設定モーダル -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>設定</h3>
+                    <button id="close-settings" class="icon-btn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="form-group">
+                    <label for="bg-color-picker">背景色</label>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="bg-color-picker" value="#0f172a">
+                        <button id="reset-bg-btn" class="btn btn-secondary">デフォルトに戻す</button>
+                    </div>
+                </div>
+                <hr class="settings-divider">
+                <div class="form-group">
+                    <label>データの引き継ぎ（バックアップ）</label>
+                    <p class="settings-desc">今のデータをテキストとしてコピーし、アプリ更新後に下の枠に貼り付けて復元できます。</p>
+                    <button id="export-btn" class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;">
+                        <i class="fas fa-copy"></i> データをコピーする
+                    </button>
+                    <textarea id="import-data" placeholder="ここにコピーしたデータを貼り付けます..." rows="3" style="width: 100%; resize: vertical; padding: 12px; border-radius: 8px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); font-family: inherit; margin-bottom: 8px;"></textarea>
+                    <button id="import-btn" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-file-import"></i> データを復元する
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
